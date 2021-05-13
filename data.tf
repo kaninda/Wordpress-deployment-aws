@@ -1,4 +1,4 @@
-data "aws_iam_policy_document" "s3policy" {
+/*data "aws_iam_policy_document" "s3policy" {
   statement {
     actions = ["s3:GetObject"]
 
@@ -17,3 +17,5 @@ data "aws_iam_policy_document" "s3policy" {
 data "aws_route53_zone" "domain" {
   name = var.domain_name
 }
+
+*/

@@ -1,5 +1,5 @@
 
-resource "aws_s3_bucket" "aka-terraform-backend" {
+/*resource "aws_s3_bucket" "aka-terraform-backend" {
   bucket = var.bucket_name
   acl    = "private"
 
@@ -143,7 +143,145 @@ resource "aws_route53_record" "websiteurl" {
     zone_id                = aws_cloudfront_distribution.cf.hosted_zone_id
     evaluate_target_health = true
   }
+}*/
+
+// VPC
+resource "aws_vpc" "aws_aka" {
+  cidr_block           = var.vpc_adr
+  enable_dns_hostnames = var.enable_dns_hostnames
+  enable_dns_support   = var.enable_dns_support
+  tags = {
+    Name = var.vpc_name
+  }
 }
+
+// SUBNET-PUBLIC
+resource "aws_subnet" "subnet_public" {
+  cidr_block              = "10.0.1.0/24"
+  vpc_id                  = aws_vpc.aws_aka.id
+  map_public_ip_on_launch = true
+  availability_zone       = "us-east-1a"
+
+  tags = {
+    Name = "Subnet public"
+  }
+}
+// SUBNET PRIVATE
+resource "aws_subnet" "subnet_private" {
+  cidr_block              = "10.0.2.0/24"
+  vpc_id                  = aws_vpc.aws_aka.id
+  map_public_ip_on_launch = false
+  availability_zone       = "us-east-1a"
+
+  tags = {
+    Name = "Subnet private"
+  }
+}
+
+//EC2
+resource "aws_instance" "ec2_instance_wordpress" {
+  ami           = lookup(var.ami_id, var.region)
+  instance_type = var.instance_type
+
+  # Public Subnet assign to instance
+  subnet_id = aws_subnet.subnet_private.id
+
+  # Security group assign to instance
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
+
+  # key name
+  key_name = "ec2-private"
+
+  tags = local.tags
+}
+
+// SECURITY GROUP
+resource "aws_security_group" "allow_ssh" {
+  name        = "allow_SSH_http"
+  description = "Allow SSH inbound traffic"
+  vpc_id      = aws_vpc.aws_aka.id
+
+  ingress {
+    # SSH Port 22 allowed from any IP
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+// INTERNET GATEWAY
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.aws_aka.id
+
+  tags = local.tags
+}
+
+// NAT
+resource "aws_nat_gateway" "nat_gw" {
+  allocation_id = aws_eip.eip.id
+  subnet_id     = aws_subnet.subnet_public.id
+  depends_on    = [aws_internet_gateway.gw]
+  tags          = local.tags
+}
+
+resource "aws_route_table" "route_public" {
+  vpc_id = aws_vpc.aws_aka.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.nat_gw.id
+  }
+
+  tags = local.tags
+}
+
+resource "aws_route_table_association" "private_route_ass" {
+  subnet_id      = aws_subnet.subnet_private.id
+  route_table_id = aws_route_table.route_public.id
+}
+
+//EIP
+resource "aws_eip" "eip" {
+  vpc      = true
+  instance = aws_instance.ec2_instance_wordpress.id
+  tags     = local.tags
+}
+
+// APPLICATION LOAD BALANCER
+resource "aws_lb" "loadbl" {
+  name                       = "loadbl"
+  internal                   = false
+  load_balancer_type         = "application"
+  security_groups            = [aws_security_group.allow_ssh.id]
+  subnets                    = aws_subnet.subnet_public.*.id
+  enable_deletion_protection = true
+
+  tags = local.tags
+}
+
+
+/*resource "aws_route_table" "route-public" {
+  vpc_id = aws_vpc.aws_aka.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw.id
+  }
+
+  tags = {
+    Name = "public-route-table"
+  }
+}*/
+
+
 
 
 

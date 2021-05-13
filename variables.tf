@@ -31,3 +31,32 @@ variable "domain_name" {
   type        = string
   default     = "onclekani.net"
 }
+
+variable "vpc_adr" {
+  default = "10.0.0.0/16"
+}
+
+variable "enable_dns_hostnames" {
+  type    = bool
+  default = true
+}
+
+variable "enable_dns_support" {
+  type    = bool
+  default = true
+}
+
+variable "vpc_name" {
+  default = "aws_vpc_name"
+}
+
+
+variable "ami_id" {
+  default = {
+    us-east-1 = "ami-00d1ab6b335f217cf"
+  }
+}
+
+variable "instance_type" {
+  default = "t2.micro"
+}
