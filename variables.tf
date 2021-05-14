@@ -53,7 +53,7 @@ variable "vpc_name" {
 
 variable "ami_id" {
   default = {
-    us-east-1 = "ami-00d1ab6b335f217cf"
+    us-east-1 = "ami-09e67e426f25ce0d7"
   }
 }
 

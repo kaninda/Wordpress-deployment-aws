@@ -155,8 +155,12 @@ resource "aws_vpc" "aws_aka" {
   }
 }
 
+output "aws_vpc_id" {
+  value = aws_vpc.aws_aka.id
+}
+
 // SUBNET-PUBLIC
-resource "aws_subnet" "subnet_public" {
+/*resource "aws_subnet" "subnet_public" {
   cidr_block              = "10.0.1.0/24"
   vpc_id                  = aws_vpc.aws_aka.id
   map_public_ip_on_launch = true
@@ -165,35 +169,44 @@ resource "aws_subnet" "subnet_public" {
   tags = {
     Name = "Subnet public"
   }
-}
+}*/
 // SUBNET PRIVATE
 resource "aws_subnet" "subnet_private" {
-  cidr_block              = "10.0.2.0/24"
-  vpc_id                  = aws_vpc.aws_aka.id
-  map_public_ip_on_launch = false
-  availability_zone       = "us-east-1a"
+  cidr_block = "10.0.2.0/24"
+  vpc_id     = aws_vpc.aws_aka.id
+  //map_public_ip_on_launch = false
+  availability_zone = "us-east-1a"
 
   tags = {
     Name = "Subnet private"
   }
 }
 
+output "aws_subnet_private" {
+  value = aws_subnet.subnet_private.id
+}
+
 //EC2
 resource "aws_instance" "ec2_instance_wordpress" {
   ami           = lookup(var.ami_id, var.region)
   instance_type = var.instance_type
-
   # Public Subnet assign to instance
   subnet_id = aws_subnet.subnet_private.id
 
   # Security group assign to instance
-  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
+  vpc_security_group_ids      = [aws_security_group.allow_ssh.id]
+  associate_public_ip_address = true
 
   # key name
-  key_name = "ec2-private"
-
-  tags = local.tags
+  key_name = "admin"
+  tags     = local.tags
 }
+
+output "aws_instance_id" {
+  value = aws_instance.ec2_instance_wordpress.id
+
+}
+
 
 // SECURITY GROUP
 resource "aws_security_group" "allow_ssh" {
@@ -209,30 +222,46 @@ resource "aws_security_group" "allow_ssh" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    # HTTP port 80 from any IP
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 443
+    to_port     = 443
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
 }
 
 // INTERNET GATEWAY
-resource "aws_internet_gateway" "gw" {
+/*resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.aws_aka.id
 
   tags = local.tags
-}
+}*/
 
 // NAT
-resource "aws_nat_gateway" "nat_gw" {
+/*resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.eip.id
   subnet_id     = aws_subnet.subnet_public.id
   depends_on    = [aws_internet_gateway.gw]
   tags          = local.tags
-}
+}*/
 
-resource "aws_route_table" "route_public" {
+/*resource "aws_route_table" "route_public" {
   vpc_id = aws_vpc.aws_aka.id
 
   route {
@@ -241,22 +270,22 @@ resource "aws_route_table" "route_public" {
   }
 
   tags = local.tags
-}
+}*/
 
-resource "aws_route_table_association" "private_route_ass" {
+/*resource "aws_route_table_association" "private_route_ass" {
   subnet_id      = aws_subnet.subnet_private.id
   route_table_id = aws_route_table.route_public.id
-}
+}*/
 
 //EIP
-resource "aws_eip" "eip" {
+/*resource "aws_eip" "eip" {
   vpc      = true
   instance = aws_instance.ec2_instance_wordpress.id
   tags     = local.tags
-}
+}*/
 
 // APPLICATION LOAD BALANCER
-resource "aws_lb" "loadbl" {
+/*resource "aws_lb" "loadbl" {
   name                       = "loadbl"
   internal                   = false
   load_balancer_type         = "application"
@@ -265,7 +294,7 @@ resource "aws_lb" "loadbl" {
   enable_deletion_protection = true
 
   tags = local.tags
-}
+}*/
 
 
 /*resource "aws_route_table" "route-public" {
