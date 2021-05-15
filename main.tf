@@ -160,18 +160,20 @@ output "aws_vpc_id" {
 }
 
 // SUBNET-PUBLIC
-/*resource "aws_subnet" "subnet_public" {
+resource "aws_subnet" "subnet_public" {
   cidr_block              = "10.0.1.0/24"
   vpc_id                  = aws_vpc.aws_aka.id
   map_public_ip_on_launch = true
   availability_zone       = "us-east-1a"
 
   tags = {
-    Name = "Subnet public"
+    Name        = "terraform_sb_public_tp7"
+    Environment = "development"
+    Project     = "TP7"
   }
-}*/
+}
 // SUBNET PRIVATE
-resource "aws_subnet" "subnet_private" {
+/*resource "aws_subnet" "subnet_private" {
   cidr_block = "10.0.2.0/24"
   vpc_id     = aws_vpc.aws_aka.id
   //map_public_ip_on_launch = false
@@ -180,10 +182,10 @@ resource "aws_subnet" "subnet_private" {
   tags = {
     Name = "Subnet private"
   }
-}
+}*/
 
-output "aws_subnet_private" {
-  value = aws_subnet.subnet_private.id
+output "aws_subnet_public" {
+  value = aws_subnet.subnet_public.id
 }
 
 //EC2
@@ -191,22 +193,25 @@ resource "aws_instance" "ec2_instance_wordpress" {
   ami           = lookup(var.ami_id, var.region)
   instance_type = var.instance_type
   # Public Subnet assign to instance
-  subnet_id = aws_subnet.subnet_private.id
+  subnet_id = aws_subnet.subnet_public.id
 
   # Security group assign to instance
   vpc_security_group_ids      = [aws_security_group.allow_ssh.id]
   associate_public_ip_address = true
+  count                       = 1
 
   # key name
   key_name = "admin"
-  tags     = local.tags
+  tags = {
+    Name        = "terraform_ec2_tp7"
+    Environment = "development"
+    Project     = "TP7"
+  }
 }
 
 output "aws_instance_id" {
-  value = aws_instance.ec2_instance_wordpress.id
-
+  value = aws_instance.ec2_instance_wordpress[0].id
 }
-
 
 // SECURITY GROUP
 resource "aws_security_group" "allow_ssh" {
@@ -244,14 +249,20 @@ resource "aws_security_group" "allow_ssh" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  tags = {
+    Name        = "terraform_sg_tp7"
+    Environment = "development"
+    Project     = "TP7"
+  }
+
 }
 
 // INTERNET GATEWAY
-/*resource "aws_internet_gateway" "gw" {
+resource "aws_internet_gateway" "gw" {
   vpc_id = aws_vpc.aws_aka.id
 
   tags = local.tags
-}*/
+}
 
 // NAT
 /*resource "aws_nat_gateway" "nat_gw" {
@@ -261,21 +272,21 @@ resource "aws_security_group" "allow_ssh" {
   tags          = local.tags
 }*/
 
-/*resource "aws_route_table" "route_public" {
+resource "aws_route_table" "route_public" {
   vpc_id = aws_vpc.aws_aka.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.nat_gw.id
+    gateway_id = aws_internet_gateway.gw.id
   }
 
   tags = local.tags
-}*/
+}
 
-/*resource "aws_route_table_association" "private_route_ass" {
-  subnet_id      = aws_subnet.subnet_private.id
+resource "aws_route_table_association" "private_route_ass" {
+  subnet_id      = aws_subnet.subnet_public.id
   route_table_id = aws_route_table.route_public.id
-}*/
+}
 
 //EIP
 /*resource "aws_eip" "eip" {
