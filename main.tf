@@ -188,6 +188,11 @@ output "aws_subnet_public" {
   value = aws_subnet.subnet_public.id
 }
 
+resource "aws_key_pair" "admin" {
+  key_name   = "admin"
+  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC5/sVWlZwUmkAHp6+kRYGEGF/Ky22RDO4u44ljD/qK8gamx7zCzTOptGFavvnE0xPXSTMlfIWte85ppYWoZq+R32CgitrifGMm7MH+vCf4qtlmKMLWcNH7LzdbBxK55qJxkwBrpul09waGMa4GZ+6EtgaK0rIJNt6H+n2charlu8dbJNwvj40YO0b+5vRslnD65hm1wR7sRnALv65vz+HD7TiCGF1NbL/C4AogfxOrWJ+Tzs75E88R73XCa96/dMPFYOfJHwbofNp0VfX69ZeOi2TADxogMX7e+n2rVs/K7RiRTgYuL/f/1r+fGdcVHHGsWbE7ZpFtMdIPraCvv6u64fO06/yuH2WrQxLMuMUM6onK26tSXCIOOBgng81Hez4yP/B+XSc9XiIDZg3ezZ+TowSnZrvHzEllQsDrJvJOi8Q+e+X4KDnhYIfpmlaMvZYbHRBhpOAGuC3VAtP7yRy1jW3KteJWTKb119TXnT6HULUPLctNAFgMxD5HhcIonVk= vagrant@arnaud-vm"
+}
+
 //EC2
 resource "aws_instance" "ec2_instance_wordpress" {
   ami           = lookup(var.ami_id, var.region)
@@ -215,9 +220,10 @@ output "aws_instance_id" {
 
 // SECURITY GROUP
 resource "aws_security_group" "allow_ssh" {
-  name        = "allow_SSH_http"
-  description = "Allow SSH inbound traffic"
-  vpc_id      = aws_vpc.aws_aka.id
+  name                   = "allow_SSH_http"
+  description            = "Allow SSH inbound traffic"
+  vpc_id                 = aws_vpc.aws_aka.id
+  revoke_rules_on_delete = true
 
   ingress {
     # SSH Port 22 allowed from any IP
