@@ -57,6 +57,39 @@ variable "ami_id" {
   }
 }
 
-variable "instance_type" {
+variable "instance_type_ec2" {
   default = "t2.micro"
 }
+
+variable "instance_type_rds" {
+  default = ""
+}
+
+variable "availability_zone_a" {
+  default = "us-east-1a"
+}
+
+variable "availability_zone_b" {
+  default = "us-east-1b"
+}
+
+variable "database_name" {
+  default = "mydb"
+}
+
+variable "database_user" {
+  default = "root"
+}
+
+variable "database_password" {
+  default = "rootPassword"
+}
+
+
+
+
+
+
+
+
+
