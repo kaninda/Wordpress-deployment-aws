@@ -61,10 +61,6 @@ variable "instance_type_ec2" {
   default = "t2.micro"
 }
 
-variable "instance_type_rds" {
-  default = ""
-}
-
 variable "availability_zone_a" {
   default = "us-east-1a"
 }
