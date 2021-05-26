@@ -8,7 +8,6 @@ resource "aws_instance" "ec2_instance_wordpress" {
   # Security group assign to instance
   vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
   associate_public_ip_address = true
-  count                       = 1
 
   # key name
   key_name = "admin_ec2"
@@ -20,7 +19,7 @@ resource "aws_instance" "ec2_instance_wordpress" {
 }
 
 output "public_ip_ec2" {
-  value = aws_instance.ec2_instance_wordpress[0].public_ip
+  value = aws_instance.ec2_instance_wordpress.public_ip
 }
 
 // RDS

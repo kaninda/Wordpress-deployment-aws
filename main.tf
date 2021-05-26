@@ -166,6 +166,16 @@ resource "aws_internet_gateway" "gw" {
   tags = local.tags
 }
 
+resource "aws_eip" "eip_ec2" {
+  vpc      = true
+  instance = aws_instance.ec2_instance_wordpress.id
+  tags     = local.tags
+}
+
+output "eip_ec2_public_ip" {
+  value = aws_eip.eip_ec2.public_ip
+}
+
 // SUBNET-PUBLIC
 resource "aws_subnet" "subnet_public" {
   cidr_block              = "10.0.1.0/24"
@@ -192,7 +202,7 @@ resource "aws_key_pair" "admin_ec2" {
 }
 
 output "aws_instance_id" {
-  value = aws_instance.ec2_instance_wordpress[0].id
+  value = aws_instance.ec2_instance_wordpress.id
 }
 
 
@@ -265,12 +275,6 @@ resource "aws_route_table_association" "private_route_ass" {
   tags          = local.tags
 }*/
 
-//EIP
-/*resource "aws_eip" "eip" {
-  vpc      = true
-  instance = aws_instance.ec2_instance_wordpress.id
-  tags     = local.tags
-}*/
 
 // APPLICATION LOAD BALANCER
 /*resource "aws_lb" "loadbl" {

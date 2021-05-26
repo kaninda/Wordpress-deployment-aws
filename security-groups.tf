@@ -15,8 +15,8 @@ resource "aws_security_group" "allow_ssh_http" {
 
   ingress {
     # HTTP port 80 from any IP
-    from_port   = 8080
-    to_port     = 8080
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -36,7 +36,7 @@ resource "aws_security_group" "allow_ssh_http" {
   }
 
   tags = {
-    Name        = "terraform_sg_tp7"
+    Name        = "sg_ec2"
     Environment = "development"
     Project     = "TP7"
   }
@@ -63,5 +63,10 @@ resource "aws_security_group" "rds_security_group" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = {
+    Name        = "rds_sg"
+    Environment = "development"
+    Project     = "TP7"
   }
 }
