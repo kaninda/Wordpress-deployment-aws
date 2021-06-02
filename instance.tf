@@ -64,17 +64,19 @@ resource "aws_db_parameter_group" "parameter_group" {
   }
 }
 
-// BASTION
-resource "aws_instance" "bastion"{
+// NAT INSTANCE  -- BASTION
+
+resource "aws_instance" "nat" {
   ami           = lookup(var.ami_id, var.region)
   instance_type = var.instance_type_ec2
   # Public Subnet assign to instance
-  subnet_id = aws_subnet.subnet_private_1.id
+  subnet_id = aws_subnet.subnet_public.id
 
-  vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
-  associate_public_ip_address = false
+  vpc_security_group_ids      = [aws_security_group.nat.id]
+  associate_public_ip_address = true
+  source_dest_check           = false
 
-    # key name
+  # key name
   key_name = "admin_ec2"
   tags = {
     Name        = "terraform_bastion_tp7"
@@ -83,8 +85,10 @@ resource "aws_instance" "bastion"{
   }
 }
 
+// 
+
 output "public_ip_bastion" {
-  value = aws_instance.bastion.public_ip
+  value = aws_instance.nat.public_ip
 }
 
 //APPLICATION LOAd BALANCER
@@ -95,13 +99,13 @@ resource "aws_alb" "alb" {
 }
 
 resource "aws_alb_target_group" "group" {
-  name     = "aka-alb-target"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.aws_aka.id
+  name        = "aka-alb-target"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.aws_aka.id
   target_type = "instance"
 
-    health_check {
+  health_check {
     path = "/index.php"
     port = 80
   }

@@ -120,6 +120,7 @@ resource "aws_internet_gateway" "gw" {
   tags = local.tags
 }
 
+//EIP
 resource "aws_eip" "eip_ec2" {
   vpc      = true
   instance = aws_instance.ec2_instance_wordpress.id
@@ -204,23 +205,14 @@ resource "aws_subnet" "subnet_private_2" {
 
 
 
-// NAT GATEWAY
-resource "aws_nat_gateway" "nat_gw" {
-  allocation_id = aws_eip.eip_ec2.id
-  subnet_id     = aws_subnet.subnet_public.id
-  depends_on    = [aws_internet_gateway.gw]
-  tags          = local.tags
-}
-
-
 // ROUTE PRIVATE
 
 resource "aws_route_table" "route_private" {
   vpc_id = aws_vpc.aws_aka.id
 
   route {
-    cidr_block = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.nat_gw.id
+    cidr_block  = "0.0.0.0/0"
+    instance_id = aws_instance.nat.id
   }
 
   tags = local.tags
