@@ -70,3 +70,51 @@ resource "aws_security_group" "rds_security_group" {
     Project     = "TP7"
   }
 }
+
+
+resource "aws_security_group" "alb" {
+  name        = "terraform_alb_security_group"
+  description = "Terraform load balancer security group"
+  vpc_id      = aws_vpc.aws_aka.id
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow all outbound traffic.
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+}
+
+resource "aws_security_group" "bastion_sg" {
+  name   = "bastion-security-group"
+  vpc_id = aws_vpc.aws_aka.id
+
+  ingress {
+    protocol    = "tcp"
+    from_port   = 22
+    to_port     = 22
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    protocol    = -1
+    from_port   = 0 
+    to_port     = 0 
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}

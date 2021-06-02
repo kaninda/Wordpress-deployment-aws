@@ -3,11 +3,11 @@ resource "aws_instance" "ec2_instance_wordpress" {
   ami           = lookup(var.ami_id, var.region)
   instance_type = var.instance_type_ec2
   # Public Subnet assign to instance
-  subnet_id = aws_subnet.subnet_public.id
+  subnet_id = aws_subnet.subnet_private_1.id
 
   # Security group assign to instance
   vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
-  associate_public_ip_address = true
+  associate_public_ip_address = false
 
   # key name
   key_name = "admin_ec2"
@@ -23,7 +23,6 @@ output "public_ip_ec2" {
 }
 
 // RDS
-
 resource "aws_db_subnet_group" "db_subnet_group" {
   name        = "db-subnet-group"
   description = "Terraform example RDS subnet group"
@@ -53,7 +52,7 @@ output "end_point" {
 
 resource "aws_db_parameter_group" "parameter_group" {
   name        = "akagroup"
-  description = "Terraform example parameter group for mysql5.6"
+  description = "aka parameter group for mysql5.7"
   family      = "mysql5.6"
   parameter {
     name  = "character_set_server"
@@ -64,5 +63,60 @@ resource "aws_db_parameter_group" "parameter_group" {
     value = "utf8"
   }
 }
+
+// BASTION
+resource "aws_instance" "bastion"{
+  ami           = lookup(var.ami_id, var.region)
+  instance_type = var.instance_type_ec2
+  # Public Subnet assign to instance
+  subnet_id = aws_subnet.subnet_private_1.id
+
+  vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
+  associate_public_ip_address = false
+
+    # key name
+  key_name = "admin_ec2"
+  tags = {
+    Name        = "terraform_bastion_tp7"
+    Environment = "development"
+    Project     = "TP7"
+  }
+}
+
+output "public_ip_bastion" {
+  value = aws_instance.bastion.public_ip
+}
+
+//APPLICATION LOAd BALANCER
+resource "aws_alb" "alb" {
+  name            = "aka-alb"
+  security_groups = [aws_security_group.alb.id]
+  subnets         = [aws_subnet.subnet_private_1.id, aws_subnet.subnet_private_2.id]
+}
+
+resource "aws_alb_target_group" "group" {
+  name     = "aka-alb-target"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.aws_aka.id
+  target_type = "instance"
+
+    health_check {
+    path = "/index.php"
+    port = 80
+  }
+}
+
+resource "aws_alb_listener" "listener_http" {
+  load_balancer_arn = aws_alb.alb.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_alb_target_group.group.arn
+    type             = "forward"
+  }
+}
+
 
 

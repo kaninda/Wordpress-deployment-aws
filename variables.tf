@@ -32,9 +32,24 @@ variable "domain_name" {
   default     = "onclekani.net"
 }
 
+//Les adresses
 variable "vpc_adr" {
   default = "10.0.0.0/16"
 }
+
+variable "subnet_public_adr"{
+  default = "10.0.1.0/24"
+}
+
+variable "subnet_private_1" {
+  default = "10.0.2.0/24"
+}
+
+variable "subnet_private_2" {
+  default = "10.0.3.0/24" 
+}
+
+// Fin adress
 
 variable "enable_dns_hostnames" {
   type    = bool
@@ -80,6 +95,12 @@ variable "database_user" {
 variable "database_password" {
   default = "rootPassword"
 }
+
+variable "certificate_arn" {
+  default = "arn:aws:iam::187416307283:server-certificate/test_cert_rab3wuqwgja25ct3n4jdj2tzu4"
+}
+
+
 
 
 

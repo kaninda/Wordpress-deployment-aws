@@ -1,52 +1,6 @@
 
-/*resource "aws_s3_bucket" "aka-terraform-backend" {
-  bucket = var.bucket_name
-  acl    = "private"
+/*
 
-  //because i will use it as backend, so let turn it on
-  versioning {
-    enabled = true
-  }
-
-  // prevent to be destroy 
-  lifecycle {
-    prevent_destroy = true
-  }
-
-  // security
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = var.sse_algorithm
-      }
-    }
-  }
-
-  tags = local.tags
-}
-
-resource "aws_s3_bucket_public_access_block" "s3block" {
-  bucket                  = aws_s3_bucket.aka-terraform-backend.id
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-resource "aws_dynamodb_table" "dynamodb_name" {
-  name           = var.dynamodb_name
-  read_capacity  = 1
-  write_capacity = 1
-  hash_key       = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-
-  tags = local.tags
-}
 
 resource "aws_cloudfront_distribution" "cf" {
   enabled             = true
@@ -178,7 +132,7 @@ output "eip_ec2_public_ip" {
 
 // SUBNET-PUBLIC
 resource "aws_subnet" "subnet_public" {
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = var.subnet_public_adr
   vpc_id                  = aws_vpc.aws_aka.id
   map_public_ip_on_launch = true
   availability_zone       = var.availability_zone_a
@@ -206,6 +160,7 @@ output "aws_instance_id" {
 }
 
 
+// ROUTE PUBLIC
 
 resource "aws_route_table" "route_public" {
   vpc_id = aws_vpc.aws_aka.id
@@ -226,7 +181,7 @@ resource "aws_route_table_association" "public_route_ass" {
 
 // SUBNET PRIVATE
 resource "aws_subnet" "subnet_private_1" {
-  cidr_block              = "10.0.2.0/24"
+  cidr_block              = var.subnet_private_1
   vpc_id                  = aws_vpc.aws_aka.id
   availability_zone       = var.availability_zone_a
   map_public_ip_on_launch = false
@@ -237,7 +192,7 @@ resource "aws_subnet" "subnet_private_1" {
 }
 
 resource "aws_subnet" "subnet_private_2" {
-  cidr_block              = "10.0.3.0/24"
+  cidr_block              = var.subnet_private_2
   vpc_id                  = aws_vpc.aws_aka.id
   availability_zone       = var.availability_zone_b
   map_public_ip_on_launch = false
@@ -248,32 +203,36 @@ resource "aws_subnet" "subnet_private_2" {
 }
 
 
-/*
+
+// NAT GATEWAY
+resource "aws_nat_gateway" "nat_gw" {
+  allocation_id = aws_eip.eip_ec2.id
+  subnet_id     = aws_subnet.subnet_public.id
+  depends_on    = [aws_internet_gateway.gw]
+  tags          = local.tags
+}
+
+
+// ROUTE PRIVATE
+
 resource "aws_route_table" "route_private" {
   vpc_id = aws_vpc.aws_aka.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
+    nat_gateway_id = aws_nat_gateway.nat_gw.id
   }
 
   tags = local.tags
 }
 
 resource "aws_route_table_association" "private_route_ass" {
-  subnet_id      = aws_subnet.subnet_private.id
+  subnet_id      = aws_subnet.subnet_private_1.id
   route_table_id = aws_route_table.route_private.id
-}*/
+}
 
 
 
-// NAT
-/*resource "aws_nat_gateway" "nat_gw" {
-  allocation_id = aws_eip.eip.id
-  subnet_id     = aws_subnet.subnet_public.id
-  depends_on    = [aws_internet_gateway.gw]
-  tags          = local.tags
-}*/
 
 
 // APPLICATION LOAD BALANCER
