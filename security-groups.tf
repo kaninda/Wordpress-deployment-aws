@@ -10,7 +10,7 @@ resource "aws_security_group" "allow_ssh_http" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [var.subnet_public_adr]
   }
 
   ingress {
@@ -35,12 +35,18 @@ resource "aws_security_group" "allow_ssh_http" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  egress { # MySQL
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = [var.subnet_private_1]
+  }
+
   tags = {
     Name        = "sg_ec2"
     Environment = "development"
     Project     = "TP7"
   }
-
 }
 
 resource "aws_security_group" "rds_security_group" {
@@ -50,7 +56,7 @@ resource "aws_security_group" "rds_security_group" {
 
 
   ingress {
-    # SSH Port 22 allowed from any IP
+    # TCP Port for private sg
     from_port       = 3306
     to_port         = 3306
     protocol        = "tcp"
