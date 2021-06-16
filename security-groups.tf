@@ -125,7 +125,7 @@ resource "aws_security_group" "bastion_sg" {
   }
 }
 
-resource "aws_security_group" "nat" {
+resource "aws_security_group" "bastion" {
   name        = "vpc_nat"
   description = "Can access both subnets"
 

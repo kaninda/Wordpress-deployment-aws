@@ -18,10 +18,6 @@ resource "aws_instance" "ec2_instance_wordpress" {
   }
 }
 
-output "public_ip_ec2" {
-  value = aws_instance.ec2_instance_wordpress.public_ip
-}
-
 // RDS
 resource "aws_db_subnet_group" "db_subnet_group" {
   name        = "db-subnet-group"
@@ -66,13 +62,13 @@ resource "aws_db_parameter_group" "parameter_group" {
 
 // NAT INSTANCE  -- BASTION
 
-resource "aws_instance" "nat" {
+resource "aws_instance" "bastion" {
   ami           = lookup(var.ami_id, var.region)
   instance_type = var.instance_type_ec2
   # Public Subnet assign to instance
   subnet_id = aws_subnet.subnet_public.id
 
-  vpc_security_group_ids      = [aws_security_group.nat.id]
+  vpc_security_group_ids      = [aws_security_group.bastion.id]
   associate_public_ip_address = true
   source_dest_check           = false
 
@@ -85,10 +81,10 @@ resource "aws_instance" "nat" {
   }
 }
 
-// 
+
 
 output "public_ip_bastion" {
-  value = aws_instance.nat.public_ip
+  value = aws_instance.bastion.public_ip
 }
 
 //APPLICATION LOAd BALANCER
