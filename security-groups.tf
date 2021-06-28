@@ -105,6 +105,12 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  tags = {
+    Name        = "alb_sg"
+    Environment = "development"
+    Project     = "TP7"
+  }
+
 }
 
 resource "aws_security_group" "bastion_sg" {
@@ -122,6 +128,11 @@ resource "aws_security_group" "bastion_sg" {
     from_port   = 0
     to_port     = 0
     cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags = {
+    Name        = "bastion_sg"
+    Environment = "development"
+    Project     = "TP7"
   }
 }
 
@@ -182,7 +193,7 @@ resource "aws_security_group" "bastion" {
   vpc_id = aws_vpc.aws_aka.id
 
   tags = {
-    Name        = "Nat bastion"
+    Name        = "bastion"
     Environment = "development"
     Project     = "TP7"
   }

@@ -12,10 +12,10 @@
       identifiers = [aws_cloudfront_origin_access_identity.oai.iam_arn]
     }
   }
-}
+}*/
 
 data "aws_route53_zone" "domain" {
   name = var.domain_name
 }
 
-*/
+
