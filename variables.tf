@@ -37,18 +37,21 @@ variable "vpc_adr" {
   default = "10.0.0.0/16"
 }
 
-variable "subnet_public_adr"{
+variable "subnet_public_adr_1"{
   default = "10.0.1.0/24"
 }
 
-variable "subnet_private_1" {
+variable "subnet_public_adr_2"{
   default = "10.0.2.0/24"
 }
 
-variable "subnet_private_2" {
-  default = "10.0.3.0/24" 
+variable "subnet_private_1" {
+  default = "10.0.3.0/24"
 }
 
+variable "subnet_private_2" {
+  default = "10.0.4.0/24"
+}
 // Fin adress
 
 variable "enable_dns_hostnames" {

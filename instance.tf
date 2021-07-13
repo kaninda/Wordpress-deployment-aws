@@ -6,7 +6,7 @@ resource "aws_instance" "ec2_instance_wordpress" {
   subnet_id = aws_subnet.subnet_private_1.id
 
   # Security group assign to instance
-  vpc_security_group_ids      = [aws_security_group.allow_ssh_http.id]
+  vpc_security_group_ids      = [aws_security_group.sgEc2.id]
   associate_public_ip_address = false
 
   # key name
@@ -27,9 +27,9 @@ resource "aws_db_subnet_group" "db_subnet_group" {
 
 resource "aws_db_instance" "db_instance_mysql" {
   identifier                = "databaseaka"
-  allocated_storage         = 10
+  allocated_storage         = 20
   engine                    = "mysql"
-  engine_version            = "5.6.35"
+  engine_version            = "8.0.20"
   instance_class            = "db.t2.micro"
   name                      = var.database_name
   username                  = var.database_user
@@ -48,8 +48,8 @@ output "end_point" {
 
 resource "aws_db_parameter_group" "parameter_group" {
   name        = "akagroup"
-  description = "aka parameter group for mysql5.7"
-  family      = "mysql5.6"
+  description = "aka parameter group for mysql8.0"
+  family      = "mysql8.0"
   parameter {
     name  = "character_set_server"
     value = "utf8"
@@ -66,9 +66,9 @@ resource "aws_instance" "bastion" {
   ami           = lookup(var.ami_id, var.region)
   instance_type = var.instance_type_ec2
   # Public Subnet assign to instance
-  subnet_id = aws_subnet.subnet_public.id
+  subnet_id = aws_subnet.subnet_public_1.id
 
-  vpc_security_group_ids      = [aws_security_group.bastion.id]
+  vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
   associate_public_ip_address = true
   source_dest_check           = false
 

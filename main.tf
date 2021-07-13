@@ -133,21 +133,38 @@ output "aws_eip_public_ip" {
 
 
 // SUBNET-PUBLIC
-resource "aws_subnet" "subnet_public" {
-  cidr_block              = var.subnet_public_adr
+resource "aws_subnet" "subnet_public_1" {
+  cidr_block              = var.subnet_public_adr_1
   vpc_id                  = aws_vpc.aws_aka.id
   map_public_ip_on_launch = true
   availability_zone       = var.availability_zone_a
 
   tags = {
-    Name        = "terraform_sb_public_tp7"
+    Name        = "subnet_public1"
     Environment = "development"
     Project     = "TP7"
   }
 }
 
-output "aws_subnet_public" {
-  value = aws_subnet.subnet_public.id
+output "aws_subnet_public_1" {
+  value = aws_subnet.subnet_public_1.id
+}
+
+resource "aws_subnet" "subnet_public_2" {
+  cidr_block              = var.subnet_public_adr_2
+  vpc_id                  = aws_vpc.aws_aka.id
+  map_public_ip_on_launch = true
+  availability_zone       = var.availability_zone_b
+
+  tags = {
+    Name        = "subnet_public1"
+    Environment = "development"
+    Project     = "TP7"
+  }
+}
+
+output "aws_subnet_public_2" {
+  value = aws_subnet.subnet_public_2.id
 }
 
 
@@ -176,8 +193,13 @@ resource "aws_route_table" "route_public" {
 }
 
 
-resource "aws_route_table_association" "public_route_ass" {
-  subnet_id      = aws_subnet.subnet_public.id
+resource "aws_route_table_association" "public_route_ass1" {
+  subnet_id      = aws_subnet.subnet_public_1.id
+  route_table_id = aws_route_table.route_public.id
+}
+
+resource "aws_route_table_association" "public_route_ass2" {
+  subnet_id      = aws_subnet.subnet_public_2.id
   route_table_id = aws_route_table.route_public.id
 }
 
@@ -229,10 +251,11 @@ resource "aws_route_table_association" "private_route_ass_2" {
   route_table_id = aws_route_table.route_private.id
 }
 
+
 // NAT GATEWAY
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.eip_nat.id
-  subnet_id     = aws_subnet.subnet_public.id
+  subnet_id     = aws_subnet.subnet_public_1.id
   depends_on    = [aws_internet_gateway.gw]
   tags          = local.tags
 }
@@ -247,7 +270,7 @@ resource "aws_alb" "alb" {
   name               = "aka-alb"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
-  subnets            = [aws_subnet.subnet_private_1.id, aws_subnet.subnet_private_2.id]
+  subnets            = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_public_2.id]
 }
 
 resource "aws_alb_target_group" "target_group" {
