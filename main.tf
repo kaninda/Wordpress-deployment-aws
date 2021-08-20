@@ -1,104 +1,4 @@
 
-/*
-
-
-resource "aws_cloudfront_distribution" "cf" {
-  enabled             = true
-  aliases             = [var.endpoint]
-  default_root_object = "index.html"
-
-  origin {
-    domain_name = aws_s3_bucket.aka-terraform-backend.bucket_regional_domain_name
-    origin_id   = aws_s3_bucket.aka-terraform-backend.bucket_regional_domain_name
-
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.oai.cloudfront_access_identity_path
-    }
-  }
-
-  default_cache_behavior {
-    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
-    cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = aws_s3_bucket.aka-terraform-backend.bucket_regional_domain_name
-    viewer_protocol_policy = "redirect-to-https"
-
-    forwarded_values {
-      headers      = []
-      query_string = true
-
-      cookies {
-        forward = "all"
-      }
-    }
-  }
-
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
-
-  viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.cert.arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2018"
-  }
-
-  tags = local.tags
-}
-
-resource "aws_cloudfront_origin_access_identity" "oai" {
-  comment = "OAI for ${var.endpoint}"
-}
-
-resource "aws_s3_bucket_policy" "s3policy" {
-  bucket = aws_s3_bucket.aka-terraform-backend.id
-  policy = data.aws_iam_policy_document.s3policy.json
-}
-
-resource "aws_acm_certificate" "cert" {
-  provider                  = aws.us-east-1
-  domain_name               = var.domain_name
-  subject_alternative_names = ["*.${var.domain_name}"]
-  validation_method         = "DNS"
-  tags                      = local.tags
-}
-
-resource "aws_route53_record" "certvalidation" {
-  for_each = {
-    for d in aws_acm_certificate.cert.domain_validation_options : d.domain_name => {
-      name   = d.resource_record_name
-      record = d.resource_record_value
-      type   = d.resource_record_type
-    }
-  }
-
-  allow_overwrite = true
-  name            = each.value.name
-  records         = [each.value.record]
-  ttl             = 60
-  type            = each.value.type
-  zone_id         = data.aws_route53_zone.domain.zone_id
-}
-
-resource "aws_acm_certificate_validation" "certvalidation" {
-  provider                = aws.us-east-1
-  certificate_arn         = aws_acm_certificate.cert.arn
-  validation_record_fqdns = [for r in aws_route53_record.certvalidation : r.fqdn]
-}
-
-resource "aws_route53_record" "websiteurl" {
-  name    = var.endpoint
-  zone_id = data.aws_route53_zone.domain.zone_id
-  type    = "A"
-
-  alias {
-    name                   = aws_cloudfront_distribution.cf.domain_name
-    zone_id                = aws_cloudfront_distribution.cf.hosted_zone_id
-    evaluate_target_health = true
-  }
-}*/
-
 // VPC
 resource "aws_vpc" "aws_aka" {
   cidr_block           = var.vpc_adr
@@ -125,12 +25,6 @@ resource "aws_eip" "eip_nat" {
   vpc  = true
   tags = local.tags
 }
-
-
-output "aws_eip_public_ip" {
-  value = aws_eip.eip_nat.public_ip
-}
-
 
 // SUBNET-PUBLIC
 resource "aws_subnet" "subnet_public_1" {
@@ -273,6 +167,10 @@ resource "aws_alb" "alb" {
   subnets            = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_public_2.id]
 }
 
+output "application_load_balancer" {
+  value = aws_alb.alb.dns_name
+}
+
 resource "aws_alb_target_group" "target_group" {
   name        = "aka-alb-target"
   port        = 80
@@ -309,18 +207,89 @@ resource "aws_lb_target_group_attachment" "group_attachmentt" {
   port             = 80
 }
 
+resource "aws_cloudfront_distribution" "cld_front" {
+  origin {
 
-// ROUTE 53
-resource "aws_route53_record" "route53_record" {
-  zone_id = data.aws_route53_zone.domain.zone_id
-  name    = "www.onclekani.net"
-  type    = "A"
-  alias {
-    name                   = aws_alb.alb.dns_name
-    zone_id                = aws_alb.alb.zone_id
-    evaluate_target_health = true
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "match-viewer"
+      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
+    }
+
+    domain_name = aws_alb.alb.dns_name
+    origin_id   = aws_alb.alb.dns_name
+
+  }
+
+  enabled             = true
+  is_ipv6_enabled     = true
+  comment             = "Some comment"
+  default_root_object = "/"
+
+  default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id       = aws_alb.alb.dns_name
+    viewer_protocol_policy = "allow-all"
+
+    forwarded_values {
+      headers      = []
+      query_string = true
+
+      cookies {
+        forward = "all"
+      }
+    }
+  }
+
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+    minimum_protocol_version       = "TLSv1"
+  }
+
+  tags = {
+    Name = "cloud front"
   }
 }
+
+output "aws_cloudfront_dns" {
+  value = aws_cloudfront_distribution.cld_front.domain_name
+}
+
+
+resource "aws_route53_record" "route53_record" {
+  for_each = toset(var.domain_names)
+  zone_id  = aws_route53_zone.domain.zone_id
+  name     = each.value
+  type     = "A"
+  alias {
+    name                   = aws_cloudfront_distribution.cld_front.domain_name
+    zone_id                = aws_cloudfront_distribution.cld_front.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+// ROUTE 53
+resource "aws_route53_zone" "domain" {
+  provider = aws.east
+  name     = "arnaudkaninda.com"
+}
+
+output "ns" {
+  value = aws_route53_zone.domain.name_servers
+}
+
+
+
+
 
 
 

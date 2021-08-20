@@ -18,6 +18,10 @@ resource "aws_instance" "ec2_instance_wordpress" {
   }
 }
 
+output "private_ip" {
+  value = aws_instance.ec2_instance_wordpress.private_ip
+}
+
 // RDS
 resource "aws_db_subnet_group" "db_subnet_group" {
   name        = "db-subnet-group"

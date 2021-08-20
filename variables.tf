@@ -4,18 +4,6 @@ variable "sse_algorithm" {
   default     = "AES256"
 }
 
-variable "dynamodb_name" {
-  description = "Dynamo db name"
-  type        = string
-  default     = "kaninda-dynamodb_name"
-}
-
-variable "bucket_name" {
-  description = "Name of bucket"
-  type        = string
-  default     = "onclekani.net"
-}
-
 variable "region" {
   default = "us-east-1"
 }
@@ -23,13 +11,13 @@ variable "region" {
 variable "endpoint" {
   description = "Endpoint url"
   type        = string
-  default     = "onclekani.net"
+  default     = "arnaudkaninda.com"
 }
 
 variable "domain_name" {
   description = "Domain name"
   type        = string
-  default     = "onclekani.net"
+  default     = "arnaudkaninda.com"
 }
 
 //Les adresses
@@ -37,11 +25,11 @@ variable "vpc_adr" {
   default = "10.0.0.0/16"
 }
 
-variable "subnet_public_adr_1"{
+variable "subnet_public_adr_1" {
   default = "10.0.1.0/24"
 }
 
-variable "subnet_public_adr_2"{
+variable "subnet_public_adr_2" {
   default = "10.0.2.0/24"
 }
 
@@ -102,6 +90,12 @@ variable "database_password" {
 variable "certificate_arn" {
   default = "arn:aws:iam::187416307283:server-certificate/test_cert_rab3wuqwgja25ct3n4jdj2tzu4"
 }
+
+variable "domain_names" {
+  default = ["arnaudkaninda.com", "www.arnaudkaninda.com"]
+}
+
+
 
 
 
